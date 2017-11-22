@@ -132,73 +132,71 @@ void myHandler(int sig)
 	int j,i;
 	int strSize;
 
-		
-	if(flag==0)
+	t=getpid();
+	printf("PID = %d ",t);
+	intToStr(t,ch);
+	for(j=10;ch[j-10]!='\0';j++)
 	{
-		flag=1;
-		t=getpid();
-		printf("PID = %d ",t);
-		intToStr(t,ch);
-		for(j=10;ch[j-10]!='\0';j++)
-		{
-			
-			cmd1[j]=ch[j-10];
-		//	printf("cmd1[%d] :(%c) ",j,cmd1[j]);
-		}
-		for(i=j;i<j+sizeof(cmd2);i++)
-		{
-			cmd1[i]=cmd2[i-j];
-		//	printf("cmd1[%d] :(%c) ",i,cmd1[i]);
-		}
-
-		//printf("\ncmd1, ch[20], cmd2 : %s %s %s\n",cmd1,ch,cmd2);
-	
-		fp=popen(cmd1,"r");
-		ckptFile=fopen("myckpt.bin","wb");
-
-		while(readLine(fp,buffer)!=EOF)
-		{	
-			strSize=strlen(buffer)+1;		
-				
-			printf("\n%s and str size:%d \n",buffer,strSize);
-			
-			hexToDec(buffer,addr1);									//fetch starting and ending addresses from received string
-			
-			printf("%d. start= %llu end= %llu\n",count,addr1[0],addr1[1]);	
-			//printf("\npermission is:%c\n",permission(buffer));
-			
-			if(permission(buffer)=='r'&&checkMemoryType(buffer,strSize-1))
-			{
-				fwrite(&strSize,sizeof(int),1,ckptFile);							//write sizeof received string to ckpt file
-				fwrite(buffer,sizeof(char),strSize,ckptFile);						//write received string to ckpt file 
-				
-				printf("Permission granted to read!!\n");
-				printf("Total memory to be written: %llu\n",(addr1[1]-addr1[0]));
-				
-				ptr=(void *)addr1[0];
-				
-				fwrite(ptr,addr1[1]-addr1[0],1,ckptFile);
-										
-														
-					
-			}
-			 
-		}
-		strSize=100000;
-		fwrite(&strSize,sizeof(int),1,ckptFile);
-		getcontext(cp);
-		printf("In restoreStack()\n");	
-
-		fwrite(cp,sizeof(ucontext_t),1,ckptFile);						//write current context to file					
-		fclose(fp);		//close chkpt file
 		
+		cmd1[j]=ch[j-10];
+	//	printf("cmd1[%d] :(%c) ",j,cmd1[j]);
+	}
+	for(i=j;i<j+sizeof(cmd2);i++)
+	{
+		cmd1[i]=cmd2[i-j];
+	//	printf("cmd1[%d] :(%c) ",i,cmd1[i]);
+	}
+
+	//printf("\ncmd1, ch[20], cmd2 : %s %s %s\n",cmd1,ch,cmd2);
+
+	fp=popen(cmd1,"r");
+	ckptFile=fopen("myckpt.bin","wb");
+
+	while(readLine(fp,buffer)!=EOF)
+	{	
+		strSize=strlen(buffer)+1;		
+			
+		printf("\n%s and str size:%d \n",buffer,strSize);
+		
+		hexToDec(buffer,addr1);									//fetch starting and ending addresses from received string
+		
+		printf("%d. start= %llu end= %llu\n",count,addr1[0],addr1[1]);	
+		//printf("\npermission is:%c\n",permission(buffer));
+		
+		if(permission(buffer)=='r'&&checkMemoryType(buffer,strSize-1))
+		{
+			fwrite(&strSize,sizeof(int),1,ckptFile);							//write sizeof received string to ckpt file
+			fwrite(buffer,sizeof(char),strSize,ckptFile);						//write received string to ckpt file 
+			
+			printf("Permission granted to read!!\n");
+			printf("Total memory to be written: %llu\n",(addr1[1]-addr1[0]));
+			
+			ptr=(void *)addr1[0];
+			
+			fwrite(ptr,addr1[1]-addr1[0],1,ckptFile);
+									
+													
+				
+		}
+		 
+	}
+	flag=1;
+	strSize=100000;
+	fwrite(&strSize,sizeof(int),1,ckptFile);
+	getcontext(cp);
+	printf("In restoreStack()\nValue of flag=%d\n",flag);	
+	//*******************Now it checks if file is already closed************//
+	if(flag==1)
+	{
+		fwrite(cp,sizeof(ucontext_t),1,ckptFile);						//write current context to file					
+		fwrite(&flag,sizeof(flag),1,ckptFile);
+		fclose(fp);		//close chkpt file
 	}
 	else
 	{
-		printf("hello!!\n");
-		flag=0;
-	}
+		printf("File is closed\nFlag=%d\n",flag);
 
+	}
 
 }
 
