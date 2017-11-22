@@ -67,6 +67,9 @@ void restoreStack()
 	
 	printf("\nCmd to read Map file:%s\n",fileAddr);
 	fp1=popen(fileAddr,"r");
+	if(fp1==NULL)
+	printf("Unable to execute cat command\n");
+	
 	int len,c=0;
 	
 	while(readLine(fp1,buffer)!=EOF)
@@ -84,7 +87,9 @@ void restoreStack()
 			printf("\nStack found\n");
 			hexToDec(buffer,addr1);
 			printf("stackAddr: %llu - %llu\n",addr1[0],addr1[1]);
-			munmap((void *)addr1[0],addr1[1]-addr1[0]);
+			if(munmap((void *)addr1[0],addr1[1]-addr1[0])!=0)
+			printf("Unmap failed\n");
+			else
 			printf("Unmapped old stack..................\n");
 			
 			break;
@@ -92,9 +97,11 @@ void restoreStack()
 	}
 		
 	
-	fclose(fp1);
+	if(fclose(fp1)!=0)
+	printf("unable to close file\n");
 	
 	ckptFp=fopen(filename,"rb");
+	
 	if(ckptFp==NULL)
 	{
 			printf("Error opening file.\n");
@@ -115,31 +122,49 @@ void restoreStack()
 				
 				break;
 			}
-			fread(buffer,sizeof(char),strLen,ckptFp);
+			if(fread(buffer,sizeof(char),strLen,ckptFp)==0)
+			printf("Unable to read from file. fread() failed\n");
+			
 			printf("String read is :%s\n",buffer);
 			hexToDec(buffer,addr1);
 			
 			startAddr=mmap((void *)addr1[0],addr1[1]-addr1[0],PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
-			
-			fread(startAddr,(addr1[1]-addr1[0]),1,ckptFp);
-			printf("fPtr: %llu \n",ftell(ckptFp));
-			mprotect(startAddr,addr1[1]-addr1[0],permission(buffer));
-
+			if(startAddr==MAP_FAILED)
+			printf("mmap failed to map memory\n");
+			else
+			{
+				if(fread(startAddr,(addr1[1]-addr1[0]),1,ckptFp)==0)
+				printf("Unable to read from file. fread() failed\n");
+				
+				printf("fPtr: %llu \n",ftell(ckptFp));
+				if(mprotect(startAddr,addr1[1]-addr1[0],permission(buffer))!=0)
+				printf("mprotect() failed \n");
+				
+			}
 		}
 		
 		printf("Reading context\n");
-		fread(cp,sizeof(ucontext_t),1,ckptFp);
-
+		if(fread(cp,sizeof(ucontext_t),1,ckptFp)==0)
+		printf("Unable to read from file. fread() failed\n");
+				
 		//fread(cp,sizeof(ucontext_t),1,ckptFp);
 
 	 
 	}
 	
 	printf("Read all Data....\nResuming old process... :)\n");
-	fclose(ckptFp);
+	
+	if(fclose(ckptFp)!=0)
+	{
+		printf("fclose() failed\n");
+				
+	}
 	
 	//sleep(2);
-	setcontext(cp);
+	if(setcontext(cp)==-1)
+	{
+		printf("setcontext() unsuccesful\n");
+	}
 	//	while(1);
 }
 
