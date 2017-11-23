@@ -1,7 +1,7 @@
 # programCheckpointing
 It contains program to be checkpointed and program to resume or restart it.
-testForCkpt.c program makes checkpoint file itself without any use of dynamic library as all functions are contianed in it.
-It is just for testing purpose. I have made a .so library too.
-testForRestart.c takes name of .bin file as parameter and remaps every segment of memory of testForCkpt process prior checkpointing.
-Atlast it switches its context to testForCkpt context where it gets hang. 
-I guess the problem is with context switching. When should getcontxt() be called is the main question. 
+libckpt.c is the file which contains signal handler for SIGINT. 
+myProg.c is a simple counting program.
+testForRestart has been updated and it will be used to restart or resume the myProg.
+We will just have to type "make check " in terminal and the process begins.
+NOTE: Extra information will be printed on the screen for debugging purpose.
