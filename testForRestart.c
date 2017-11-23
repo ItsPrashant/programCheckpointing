@@ -159,8 +159,9 @@ void restoreStack()
 		printf("fclose() failed\n");
 				
 	}
-	
+	printf("Program resumes here: \n");
 	//sleep(2);
+	
 	if(setcontext(cp)==-1)
 	{
 		printf("setcontext() unsuccesful\n");
